@@ -2,8 +2,14 @@
 import java.io.*;
 import java.util.*;
 
+import org.w3c.dom.*;
+import javax.xml.parsers.*;
+import javax.xml.transform.*;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
 public class Pt2 implements Serializable {
-	private HashMap cursos;
+	private HashMap persona;
 
 	/*
 	 * Un HashMap es una col.lecio on cada node es del tipus (Objecte clau, Objecte
@@ -12,15 +18,15 @@ public class Pt2 implements Serializable {
 	 * tipus Curs.
 	 */
 	public Pt2() {
-		this.cursos = new HashMap();
+		this.persona = new HashMap();
 	}
 
 	public void carregarDades(File f) {
-		cursos.clear();
+		persones.clear();
 		try {
 			FileInputStream fis = new FileInputStream(f);
 			ObjectInputStream ois = new ObjectInputStream(fis);
-			cursos = (HashMap) ois.readObject(); // ERROR SI S'UTILITZA THIS
+			persones = (HashMap) ois.readObject(); // ERROR SI S'UTILITZA THIS
 			System.out.println("==> LES DADES DEL FITXER HA ESTAT CARREGADES\n");
 			ois.close();
 		} catch (Exception e) {
@@ -29,11 +35,38 @@ public class Pt2 implements Serializable {
 	}
 
 	public void guardarDades(File f) {
+//		try {
+//			ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(f));
+//			oos.writeObject(persones); // ERROR SI S'UTILITZA THIS
+//			System.out.println("==> LES DADES HAN ESTAT GUARDADES AL FITXER\n");
+//			oos.close();
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		}
 		try {
-			ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(f));
-			oos.writeObject(cursos); // ERROR SI S'UTILITZA THIS
-			System.out.println("==> LES DADES HAN ESTAT GUARDADES AL FITXER\n");
-			oos.close();
+			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+			DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+			Document doc = dBuilder.newDocument();
+			// root element
+			Element rootElement = doc.createElement("persones");
+			doc.appendChild(rootElement);
+
+			for (int i = 0; i < persones.size(); i++) {
+				Element departamento = doc.createElement("persona");
+				rootElement.appendChild(departamento);
+				departamento.appendChild(doc.createTextNode(persones);
+				departamento.appendChild(doc.createTextNode("Rafa Aracil"));
+			}
+
+			// write the content into xml file
+			TransformerFactory transformerFactory = TransformerFactory.newInstance();
+			Transformer transformer = transformerFactory.newTransformer();
+			DOMSource source = new DOMSource(doc);
+			StreamResult result = new StreamResult(new File("persones.xml"));
+			transformer.transform(source, result);
+			// Output to console for testing
+			StreamResult consoleResult = new StreamResult(System.out);
+			transformer.transform(source, consoleResult);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -44,14 +77,10 @@ public class Pt2 implements Serializable {
 		int opcio = 0;
 		for (int i = 0; i < 50; i++)
 			System.out.println("");
-		System.out.println("PROPOSTA DE RESOLUCIO PT2 (STREAMSD'OBJECTES)");
-
 		System.out.println("==============================================");
-		System.out.println("1. AFEGIR UN NOU CURS");
-		System.out.println("2. MODIFICAR UN CURS");
-		System.out.println("3. MOSTRAR DADES CURS");
-		System.out.println("4. ELIMINAR UN CURS");
-		System.out.println("5. SORTIR");
+		System.out.println("1. AFEGIR PERSONA");
+		System.out.println("2. GENERAR XML");
+		System.out.println("4. SORTIR");
 		System.out.print("Escull una opcio:");
 		opcio = teclat.nextInt();
 
@@ -60,8 +89,7 @@ public class Pt2 implements Serializable {
 
 	public static void main(String[] args) throws IOException {
 		Pt2 x = new Pt2();
-		String ruta = "Pt2.dat";
-		Modul m = new Modul();
+		String ruta = "myPeople.dat";
 		String id = "";
 		int o = 0;
 		File cd = new File(ruta);
@@ -71,51 +99,21 @@ public class Pt2 implements Serializable {
 			Scanner dades = new Scanner(System.in);
 			switch (o) {
 			case 1:
-				Curs c = new Curs();
-
-				id = c.omplirCurs(dades).toUpperCase();
-				System.out.println("El curs" + id + " ha estat creat");
-				System.out.println("Volsguardar-lo (s/n)?");
-				if (dades.next().equals("s")) {
-					x.cursos.put(id, c);
-					System.out.println("HIHAN " + x.cursos.size() + " CURSOS");
-				}
+				System.out.println("digues el nom de la persona");
+				id = dades.nextLine();
+				System.out.println("digues el cognom de la persona");
+				String cognom = dades.nextLine();
+				System.out.println("digues la edat de la persona");
+				if (dades.hasNextInt()) {
+					o = dades.nextInt();
+					x.persones.put(id + " " + cognom, new Persona(id, cognom, o));
+					System.out.println("La persona" + id + " " + cognom + " ha estat creada");
+					System.out.println("HIHAN " + x.persones.size() + " PERSONES");
+				} else
+					System.out.println("Error no s'ha creat, error de edat");
 				break;
 			case 2:
-				System.out.println("Introdueix el codidel curs");
-				id = dades.next().toUpperCase();
-				if (x.cursos.containsKey(id)) {
 
-					c = (Curs) x.cursos.get(id);
-					c.modificarDadesCurs(id);
-				} else {
-					System.out.println("EL CURS " + id + " NO EXISTEIX");
-				}
-				break;
-			case 3:
-				System.out.println("Introdueix el codi del curs");
-				id = dades.next().toUpperCase();
-				if (x.cursos.containsKey(id)) {
-					System.out.println(":::: DADES DEL CURS " + id + " ::");
-					c = (Curs) x.cursos.get(id);
-					c.mostrarDadesCurs();
-					System.out.println(":::::::::::::::::::::::::::::::");
-					System.out.println(" Continua?");
-					System.in.read();
-				} else {
-					System.out.println("EL CURS " + id + " NO EXISTEIX");
-				}
-				break;
-			case 4:
-				System.out.println("Introdueix el codi del curs");
-				id = dades.next().toUpperCase();
-				if (x.cursos.containsKey(id)) {
-					x.cursos.remove(id);
-					System.out.println("S'HA ELIMINAT EL CURS " + id);
-					System.out.println("HI HAN " + x.cursos.size() + " CURSOS");
-				} else {
-					System.out.println("EL CURS " + id + " NO EXISTEIX");
-				}
 				break;
 			}
 		} while (o < 5);
